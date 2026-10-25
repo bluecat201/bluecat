@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="cs" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLUECAT // Deep Space Station Command</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Orbitron & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        space: {
+                            950: '#05070E',
+                            900: '#0A0E1A',
+                            800: '#12182B',
+                            700: '#1C2541',
+                            600: '#2A365C',
+                        },
+                        cyber: {
+                            cyan: '#00F0FF',
+                            blue: '#0072FF',
+                            purple: '#A855F7',
+                            pink: '#EC4899',
+                            emerald: '#10B981'
+                        }
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 3s infinite alternate',
+                        'scanline': 'scanline 8s linear infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 15px rgba(0, 240, 255, 0.2)' },
+                            '100%': { boxShadow: '0 0 35px rgba(168, 85, 247, 0.5)' }
+                        },
+                        scanline: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(1000%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Station Glassmorphism & Cyber Details */
+        .glass-station {
+            background: rgba(18, 24, 43, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.12);
+        }
+        .glass-station:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 0 30px -5px rgba(0, 240, 255, 0.25);
+        }
+        .glass-nav {
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+        }
+        .text-cyan-glow {
+            text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+        }
+        .text-purple-glow {
+            text-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
+        }
+        .gradient-station {
+            background: linear-gradient(135deg, #00F0FF 0%, #0072FF 50%, #A855F7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #05070E;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1C2541;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00F0FF;
+        }
+    </style>
+</head>
+<body class="bg-space-950 text-slate-200 font-sans antialiased selection:bg-cyber-cyan selection:text-space-950 min-h-screen flex flex-col justify-between overflow-x-hidden relative">
+
+    <!-- Canvas Interactive Starfield Background -->
+    <canvas id="space-canvas" class="fixed inset-0 pointer-events-none z-0 opacity-60"></canvas>
+
+    <!-- Glowing Background Orbs -->
+    <div class="fixed top-0 left-1/4 w-[32rem] h-[32rem] bg-cyber-blue/10 rounded-full blur-[140px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-1/4 right-1/4 w-[35rem] h-[35rem] bg-cyber-purple/10 rounded-full blur-[160px] pointer-events-none z-0"></div>
+
+    <!-- Navigation Bar -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass-nav transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <!-- Station Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyber-cyan via-cyber-blue to-cyber-purple p-0.5 shadow-lg shadow-cyber-cyan/20 group-hover:shadow-cyber-purple/40 transition duration-300">
+                    <div class="w-full h-full bg-space-950 rounded-[7px] flex items-center justify-center">
+                        <i class="fa-solid fa-cat text-cyber-cyan group-hover:text-cyber-purple transition"></i>
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-display font-black text-lg tracking-wider text-white group-hover:text-cyber-cyan transition">BLUECAT</span>
+                    <span class="text-[9px] font-mono tracking-widest text-cyber-cyan/70 uppercase">Station // Command</span>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center gap-8 font-medium text-slate-300 text-sm tracking-wide">
+                <a href="#about" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-user-astronaut text-xs mr-1 text-cyber-cyan"></i> O mně</a>
+                <a href="#stack" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-microchip text-xs mr-1 text-cyber-cyan"></i> Tech Stack</a>
+                <a href="#projects" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-code text-xs mr-1 text-cyber-cyan"></i> Projekty</a>
+                <a href="#vault" onclick="openVaultModal()" class="hover:text-cyber-cyan transition text-cyber-purple font-semibold"><i class="fa-solid fa-gamepad text-xs mr-1"></i> Game Vault</a>
+                <a href="#contact" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-wifi text-xs mr-1 text-cyber-cyan"></i> Kontakt</a>
+            </nav>
+
+            <!-- Status Indicator & CTA -->
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-space-900 border border-emerald-500/30 text-xs text-emerald-400 font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+
+                <a href="#contact" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple text-space-950 shadow-lg shadow-cyber-cyan/20 hover:shadow-cyber-cyan/40 hover:scale-[1.02] active:scale-[0.98] transition">
+                    <i class="fa-solid fa-terminal"></i> Spojit se
+                </a>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-slate-300 hover:bg-space-800 transition" aria-label="Menu">
+                    <i class="fa-solid fa-bars-staggered text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-space-800 bg-space-950/95 px-6 py-4 flex flex-col gap-4 font-mono text-sm">
+            <a href="#about" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-user-astronaut mr-2 text-cyber-cyan"></i>O mně</a>
+            <a href="#stack" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-microchip mr-2 text-cyber-cyan"></i>Tech Stack</a>
+            <a href="#projects" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-code mr-2 text-cyber-cyan"></i>Projekty</a>
+            <a href="#" onclick="openVaultModal()" class="mobile-link text-cyber-purple hover:text-cyber-cyan py-1"><i class="fa-solid fa-gamepad mr-2"></i>Story Game Vault</a>
+            <a href="#contact" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-wifi mr-2 text-cyber-cyan"></i>Kontakt</a>
+        </div>
+    </header>
+
+    <main class="flex-grow pt-20 z-10 relative">
+        <!-- Hero Section -->
+        <section class="min-h-[88vh] flex items-center justify-center relative py-16 px-6">
+            <div class="max-w-5xl mx-auto text-center flex flex-col items-center">
+                
+                <!-- Station Badge -->
+                <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full glass-station border-cyber-cyan/30 text-cyber-cyan text-xs font-mono mb-8 tracking-wider uppercase animate-pulse-glow">
+                    <span class="w-2 h-2 rounded-full bg-cyber-cyan animate-pulse"></span>
+                    <span>DEEP SPACE STATION // COMMAND CENTER</span>
+                </div>
+
+                <!-- Avatar Emblem -->
+                <div class="relative mb-8 group">
+                    <div class="absolute -inset-2 bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple rounded-3xl blur-xl opacity-70 group-hover:opacity-100 transition duration-700"></div>
+                    <div class="relative w-36 h-36 md:w-44 md:h-44 rounded-2xl bg-space-900 border-2 border-cyber-cyan/40 flex items-center justify-center shadow-2xl overflow-hidden glass-station">
+                        <i class="fa-solid fa-cat text-6xl md:text-7xl text-cyber-cyan group-hover:scale-110 transition duration-500 text-cyan-glow"></i>
+                        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-cyber-cyan/5 to-transparent animate-scanline"></div>
+                    </div>
+                </div>
+
+                <!-- Title & Subtitle -->
+                <h1 class="font-display text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-tight mb-4 uppercase">
+                    <span class="gradient-station">BLUECAT</span>
+                </h1>
+                <p class="font-mono text-sm sm:text-base text-cyber-cyan/90 max-w-3xl mb-6 tracking-wide">
+                    Head of Development <span class="text-slate-500">•</span> Twitch Streamer & Content Creator <span class="text-slate-500">•</span> Noir & TTRPG Storyteller
+                </p>
+                <p class="text-slate-400 max-w-2xl text-base leading-relaxed mb-10">
+                    Vítá tě vesmírná stanice Bluecat. Tvořím pokročilé Discord boty a atmosférické příběhy.
+                </p>
+
+                <!-- Hero Action Buttons -->
+                <div class="flex flex-wrap justify-center gap-4 font-mono text-xs sm:text-sm">
+                    <a href="#projects" class="px-6 py-3.5 rounded-xl font-bold bg-gradient-to-r from-cyber-cyan to-cyber-blue text-space-950 hover:shadow-lg hover:shadow-cyber-cyan/30 hover:scale-105 active:scale-95 transition flex items-center gap-2">
+                        <i class="fa-solid fa-rocket"></i> Prozkoumat Stanici
+                    </a>
+                    <a href="#astra" class="px-6 py-3.5 rounded-xl font-bold glass-station text-white hover:border-cyber-purple transition hover:scale-105 active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-robot text-cyber-purple"></i> Astra
+                    </a>
+                    <button onclick="openVaultModal()" class="px-6 py-3.5 rounded-xl font-bold bg-space-800 border border-cyber-purple/40 text-cyber-purple hover:bg-cyber-purple/10 transition hover:scale-105 active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-vault"></i> Story Game Vault
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Me Section -->
+        <section id="about" class="py-20 px-6 max-w-6xl mx-auto scroll-mt-20">
+            <div class="glass-station rounded-3xl p-8 md:p-12 border border-cyber-cyan/20 relative overflow-hidden">
+                <div class="absolute -top-24 -right-24 w-64 h-64 bg-cyber-purple/10 rounded-full blur-3xl"></div>
+                
+                <div class="flex items-center gap-3 text-cyber-cyan font-mono text-xs uppercase tracking-widest mb-3">
+                    <i class="fa-solid fa-id-card"></i>
+                    <span>Personal Manifest // Logs</span>
+                </div>
+                <h2 class="font-display text-3xl md:text-4xl font-bold text-white mb-8">Kdo stojí za řízením Stanice?</h2>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Column 1: Dev Persona -->
+                    <div class="space-y-4 bg-space-900/60 p-6 rounded-2xl border border-slate-800">
+                        <div class="w-10 h-10 rounded-lg bg-cyber-blue/10 border border-cyber-blue/30 flex items-center justify-center text-cyber-cyan text-xl">
+                            <i class="fa-solid fa-code"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-display">Lead Developer</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Specializuji se na asynchronní Python backendy (<strong class="text-slate-200">Quart, AIOHTTP, discord.py</strong>) napojené na MySQL databáze. Provozuji a spravuji architekturu na vlastní serverové infrastruktuře <strong class="text-slate-200">Hetzner Cloud VPS</strong>.
+                        </p>
+                    </div>
+
+                    <!-- Column 2: Streamer Persona -->
+                    <div class="space-y-4 bg-space-900/60 p-6 rounded-2xl border border-slate-800">
+                        <div class="w-10 h-10 rounded-lg bg-cyber-purple/10 border border-cyber-purple/30 flex items-center justify-center text-cyber-purple text-xl">
+                            <i class="fa-brands fa-twitch"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-display">Streamer & Tvorba</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Na Twitchi vysílám atmosférické příběhové hry, retro klasiky a prostě cokoliv co mě baví.
+                        </p>
+                    </div>
+
+                    <!-- Column 3: Writer Persona -->
+                    <div class="space-y-4 bg-space-900/60 p-6 rounded-2xl border border-slate-800">
+                        <div class="w-10 h-10 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 text-xl">
+                            <i class="fa-solid fa-book-bookmark"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-display">Spisovatel & Storyteller</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Píši temné noir & psychologické detektivky (<strong class="text-slate-200">Inspektor Zentan</strong>) a stavím vlastní nejen D&D světy.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tech Stack Section -->
+        <section id="stack" class="py-16 px-6 max-w-6xl mx-auto scroll-mt-20">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 mb-3">
+                    <i class="fa-solid fa-microchip"></i> INFRASTRUCTURE
+                </div>
+                <h2 class="font-display text-3xl font-bold text-white">Technologická Výbava</h2>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div class="glass-station p-4 rounded-xl text-center flex flex-col items-center justify-center gap-2">
+                    <i class="fa-brands fa-python text-3xl text-amber-400"></i>
+                    <span class="font-mono text-xs font-bold text-white">Python 3.11+</span>
+                    <span class="text-[10px] text-slate-400">Quart & AIOHTTP</span>
+                </div>
+                <div class="glass-station p-4 rounded-xl text-center flex flex-col items-center justify-center gap-2">
+                    <i class="fa-brands fa-discord text-3xl text-indigo-400"></i>
+                    <span class="font-mono text-xs font-bold text-white">discord.py</span>
+                    <span class="text-[10px] text-slate-400">Bot Ecosystem</span>
+                </div>
+                <div class="glass-station p-4 rounded-xl text-center flex flex-col items-center justify-center gap-2">
+                    <i class="fa-solid fa-database text-3xl text-blue-400"></i>
+                    <span class="font-mono text-xs font-bold text-white">MySQL</span>
+                    <span class="text-[10px] text-slate-400">Relational DB</span>
+                </div>
+                <div class="glass-station p-4 rounded-xl text-center flex flex-col items-center justify-center gap-2">
+                    <i class="fa-brands fa-linux text-3xl text-slate-200"></i>
+                    <span class="font-mono text-xs font-bold text-white">Hetzner VPS</span>
+                    <span class="text-[10px] text-slate-400">Linux Server</span>
+                <div class="glass-station p-4 rounded-xl text-center flex flex-col items-center justify-center gap-2">
+                    <i class="fa-brands fa-html5 text-3xl text-orange-400"></i>
+                    <span class="font-mono text-xs font-bold text-white">Web Stack</span>
+                    <span class="text-[10px] text-slate-400">HTML / JS / Tailwind</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Showcase -->
+        <section id="projects" class="py-20 px-6 max-w-6xl mx-auto scroll-mt-20">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyber-purple/10 text-cyber-purple border border-cyber-purple/20 mb-3">
+                    <i class="fa-solid fa-cubes"></i> PORTFOLIO
+                </div>
+                <h2 class="font-display text-3xl md:text-4xl font-bold text-white mb-4">Projekty Stanice</h2>
+                <p class="text-slate-400 max-w-xl mx-auto text-sm">Přehled systémů, botů, her a literárních světů vyvinutých Bluecatem.</p>
+
+                <!-- Filter Tabs -->
+                <div class="flex flex-wrap justify-center gap-2 mt-8 font-mono text-xs">
+                    <button data-filter="all" class="filter-btn active px-4 py-2 rounded-lg font-bold bg-cyber-cyan text-space-950 transition">Vše</button>
+                    <button data-filter="bots" class="filter-btn px-4 py-2 rounded-lg bg-space-800 text-slate-300 hover:text-white border border-slate-700/60 transition">Discord Boti</button>
+                    <button data-filter="lore" class="filter-btn px-4 py-2 rounded-lg bg-space-800 text-slate-300 hover:text-white border border-slate-700/60 transition">Příběhy & D&D</button>
+                </div>
+            </div>
+
+            <!-- Projects Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Astra & Childe Card -->
+                <div id="astra" class="project-card glass-station rounded-2xl p-6 flex flex-col justify-between border-cyber-cyan/30" data-category="bots">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-cyber-cyan/10 border border-cyber-cyan/30 flex items-center justify-center text-cyber-cyan text-2xl">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">FLAGSHIP BOT</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-display mb-2">Astra Bot</h3>
+                        <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                            Soustava asynchronních Discord botů s webovým Quart dashboardem. Obsahuje leveling systém, ekonomiku, mini-hry, audio nástroje a custom správy emotikonů.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap gap-1.5 mb-4 font-mono text-[10px]">
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-cyber-cyan border border-cyber-cyan/20">Python</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">discord.py</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Quart</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">MySQL</span>
+                        </div>
+                        <!-- Bot Quick Action Buttons -->
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <a href="https://discord.com/api/oauth2/authorize?client_id=883325865474269192&permissions=8&scope=bot%20applications.commands" target="_blank" class="py-2 px-3 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/40 text-xs font-mono text-indigo-300 hover:text-white transition flex items-center justify-center gap-1.5 text-center">
+                                <i class="fa-brands fa-discord"></i> Přidat Astra
+                            </a>
+                            <a href="http://167.233.23.169:5000/" target="_blank" class="py-2 px-3 rounded-lg bg-cyber-cyan/20 hover:bg-cyber-cyan/40 border border-cyber-cyan/40 text-xs font-mono text-cyber-cyan hover:text-white transition flex items-center justify-center gap-1.5 text-center">
+                                <i class="fa-solid fa-gauge-high"></i> Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deep Space Station Community -->
+                <div class="project-card glass-station rounded-2xl p-6 flex flex-col justify-between" data-category="bots">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-2xl mb-4">
+                            <i class="fa-brands fa-discord"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-display mb-2">DEEP SPACE STATION Komunita</h3>
+                        <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                            Discord komunitní hub s vlastními staničními rolemi, automatizovanou moderací, propojením na Twitch stream notifikace a živým chytáním eventů.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap gap-1.5 mb-4 font-mono text-[10px]">
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-indigo-300">Discord API</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Webhooks</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Twitch API</span>
+                        </div>
+                        <a href="https://discord.gg/RNQKGPt6bJ" target="_blank" class="text-xs font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                            Vstoupit na Stanici <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Inspektor Zentan Noir -->
+                <div class="project-card glass-station rounded-2xl p-6 flex flex-col justify-between" data-category="lore">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 text-2xl mb-4">
+                            <i class="fa-solid fa-feather-pointed"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-display mb-2">Příběhy Inspektora Zentana</h3>
+                        <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                            Osobitá autorská tvorba: noir & psychologické detektivní příběhy sledující případy Inspektora Zentana v temném, deštivém a atmosférickém světě.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap gap-1.5 mb-4 font-mono text-[10px]">
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-pink-300">Noir Fiction</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Detektivka</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Psychologické</span>
+                        </div>
+                        <button onclick="openZentanModal()" class="w-full py-2 px-3 rounded-lg bg-pink-500/15 hover:bg-pink-500/30 border border-pink-500/40 text-xs font-mono text-pink-300 hover:text-white transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-scroll"></i> Zobrazit Postup Psaní
+                        </button>
+                    </div>
+                </div>
+
+                <!-- D&D Worldbuilding -->
+                <div class="project-card glass-station rounded-2xl p-6 flex flex-col justify-between" data-category="lore">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-2xl mb-4">
+                            <i class="fa-solid fa-dice-d20"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-display mb-2">D&D</h3>
+                        <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                            Currently Nothing
+                        </p>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap gap-1.5 mb-4 font-mono text-[10px]">
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-purple-300">Worldbuilding</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">D&D 5e</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Storytelling</span>
+                        </div>
+                        <span class="text-xs font-mono text-purple-400 flex items-center gap-1">
+                            <i class="fa-solid fa-scroll"></i> Bez hráčů
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Stream Game Tracker -->
+                <div class="project-card glass-station rounded-2xl p-6 flex flex-col justify-between" data-category="games">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl mb-4">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white font-display mb-2">Stream Game Vault</h3>
+                        <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                            Osobní databáze a archiv více než 100 dohraných atmosférických her ze streamů s vlastními recenzemi a hodnocením.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap gap-1.5 mb-4 font-mono text-[10px]">
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-emerald-300">Dohrané Hry</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Recenze</span>
+                            <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Twitch Archive</span>
+                        </div>
+                        <button onclick="openVaultModal()" class="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                            Otevřít archiv her <i class="fa-solid fa-folder-open text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Socials & Direct Contact Section -->
+        <section id="contact" class="py-20 px-6 max-w-5xl mx-auto scroll-mt-20">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/20 mb-3">
+                    <i class="fa-solid fa-tower-cell"></i> FREQUENCY
+                </div>
+                <h2 class="font-display text-3xl md:text-4xl font-bold text-white mb-4">Komunikační Kanály</h2>
+                <p class="text-slate-400 max-w-lg mx-auto text-sm">Navaž spojení na některé z oficiálních frekvencí Bluecata.</p>
+            </div>
+
+            <!-- Social Media Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
+                <a href="https://twitch.tv/bluecatlive" target="_blank" class="glass-station p-6 rounded-2xl flex flex-col items-center justify-center text-center group transition">
+                    <i class="fa-brands fa-twitch text-3xl text-purple-400 group-hover:scale-110 transition mb-3"></i>
+                    <span class="font-bold text-white font-display text-sm">Twitch</span>
+                    <span class="text-[11px] font-mono text-slate-400 mt-1">Live Vysílání</span>
+                </a>
+
+                <a href="https://discord.gg/RNQKGPt6bJ" target="_blank" class="glass-station p-6 rounded-2xl flex flex-col items-center justify-center text-center group transition">
+                    <i class="fa-brands fa-discord text-3xl text-indigo-400 group-hover:scale-110 transition mb-3"></i>
+                    <span class="font-bold text-white font-display text-sm">Discord</span>
+                    <span class="text-[11px] font-mono text-slate-400 mt-1">Komunitní Server</span>
+                </a>
+
+                <a href="https://github.com/bluecat201" target="_blank" class="glass-station p-6 rounded-2xl flex flex-col items-center justify-center text-center group transition">
+                    <i class="fa-brands fa-github text-3xl text-slate-200 group-hover:scale-110 transition mb-3"></i>
+                    <span class="font-bold text-white font-display text-sm">GitHub</span>
+                    <span class="text-[11px] font-mono text-slate-400 mt-1">Zdrojové Kódy</span>
+                </a>
+
+                <a href="https://youtube.com/@bluecatstudios201" target="_blank" class="glass-station p-6 rounded-2xl flex flex-col items-center justify-center text-center group transition">
+                    <i class="fa-brands fa-youtube text-3xl text-red-500 group-hover:scale-110 transition mb-3"></i>
+                    <span class="font-bold text-white font-display text-sm">YouTube</span>
+                    <span class="text-[11px] font-mono text-slate-400 mt-1">Klipy ze streamů</span>
+                </a>
+            </div>
+
+            <!-- Direct Email Console -->
+            <div class="glass-station p-8 rounded-3xl max-w-xl mx-auto border border-cyber-cyan/30 text-center relative overflow-hidden">
+                <h3 class="font-display text-2xl font-bold text-white mb-2">Přímé Spojení</h3>
+                <p class="text-slate-400 text-xs mb-6 font-mono">Máš nějaký dotaz na spolupráci, nebo přímo na mě?</p>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <div class="w-full sm:w-auto px-4 py-3 rounded-xl bg-space-950 border border-slate-700 text-cyber-cyan font-mono text-xs flex items-center justify-between gap-4">
+                        <span id="email-text">bluecattwitch@gmail.com</span>
+                        <i class="fa-solid fa-envelope text-slate-500"></i>
+                    </div>
+                    <button id="copy-btn" class="w-full sm:w-auto px-5 py-3 rounded-xl font-mono text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-cyber-cyan to-cyber-blue text-space-950 hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2">
+                        <i class="fa-regular fa-copy"></i>
+                        <span id="copy-btn-text">Kopírovat</span>
+                    </button>
+                </div>
+
+                <div id="copy-toast" class="hidden mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
+                    <i class="fa-solid fa-circle-check"></i> Email byl zkopírován do schránky!
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Interactive: Story Game Vault -->
+    <div id="vault-modal" class="fixed inset-0 z-50 bg-space-950/90 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="glass-station w-full max-w-3xl rounded-3xl border border-cyber-purple/40 max-h-[85vh] flex flex-col overflow-hidden shadow-2xl relative">
+            
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-space-900/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyber-purple/20 border border-cyber-purple/40 flex items-center justify-center text-cyber-purple">
+                        <i class="fa-solid fa-vault text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-white text-lg">Story Game Vault</h3>
+                        <p class="text-xs font-mono text-slate-400">Nejoblíbenější atmosférické & příběhové srdcovky</p>
+                    </div>
+                </div>
+                <button onclick="closeVaultModal()" class="text-slate-400 hover:text-white p-2 text-xl transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content List -->
+            <div class="p-6 overflow-y-auto space-y-4 font-sans">
+
+                <!-- Full Master List Link Banner -->
+                <a href="https://bluecat201.github.io/finishedgames/" target="_blank" rel="noopener noreferrer" class="group block p-4 rounded-2xl bg-gradient-to-r from-cyber-purple/20 via-cyber-blue/20 to-cyber-cyan/20 border border-cyber-purple/50 hover:border-cyber-cyan transition-all duration-300 shadow-lg shadow-cyber-purple/10 hover:shadow-cyber-cyan/20 relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-cyber-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-space-950 border border-cyber-purple/50 flex items-center justify-center text-cyber-cyan group-hover:scale-110 transition duration-300">
+                                <i class="fa-solid fa-layer-group text-lg"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-display font-bold text-white text-sm">Kompletní Databáze Stream Her</h4>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyber-cyan/20 text-cyber-cyan border border-cyber-cyan/30">117+ HER</span>
+                                </div>
+                                <p class="text-xs text-slate-300">Prohlédnout si kompletní tabulku všech dohraných her, statistik a hodnocení ze streamů.</p>
+                            </div>
+                        </div>
+                        <div class="w-full sm:w-auto px-4 py-2 rounded-lg bg-cyber-purple group-hover:bg-cyber-cyan text-space-950 font-mono text-xs font-bold transition duration-300 flex items-center justify-center gap-2 whitespace-nowrap">
+                            <span>Otevřít Seznam</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i>
+                        </div>
+                    </div>
+                </a>
+                
+                <!-- Game Item 1 -->
+                <div class="bg-space-900/80 p-4 rounded-xl border border-slate-800 flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-white text-base">Undertale</h4>
+                            <span class="text-xs font-mono text-amber-400"><i class="fa-solid fa-star"></i> 10/10</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1">Absolutní masterpiece v příběhu, hudbě a herních mechanikách. Srdcová záležitost.</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded text-[10px] font-mono bg-purple-500/10 text-purple-300 border border-purple-500/20 whitespace-nowrap">Indie RPG</span>
+                </div>
+
+                <!-- Game Item 2 -->
+                <div class="bg-space-900/80 p-4 rounded-xl border border-slate-800 flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-white text-base">SOMA</h4>
+                            <span class="text-xs font-mono text-amber-400"><i class="fa-solid fa-star"></i> 10/10</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1">Hluboký sci-fi psychologický zážitek z hlubin oceánu s neuvěřitelnou atmosférou.</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded text-[10px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 whitespace-nowrap">Sci-Fi Sci-Fi</span>
+                </div>
+
+                <!-- Game Item 3 -->
+                <div class="bg-space-900/80 p-4 rounded-xl border border-slate-800 flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-white text-base">Posel Smrti (Black Mirror)</h4>
+                            <span class="text-xs font-mono text-amber-400"><i class="fa-solid fa-star"></i> 9.5/10</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1">Legendární česká temná adventura s nezaměnitelným dabingem a deštivou atmosférou.</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded text-[10px] font-mono bg-red-500/10 text-red-300 border border-red-500/20 whitespace-nowrap">CZ Adventura</span>
+                </div>
+
+                <!-- Game Item 4 -->
+                <div class="bg-space-900/80 p-4 rounded-xl border border-slate-800 flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-white text-base">Metro 2033 & Last Light</h4>
+                            <span class="text-xs font-mono text-amber-400"><i class="fa-solid fa-star"></i> 9.5/10</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1">Postapokalyptická klasika z tunelů moskevského metra plná napětí a imerze.</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 whitespace-nowrap">Post-Apo</span>
+                </div>
+
+                <!-- Game Item 5 -->
+                <div class="bg-space-900/80 p-4 rounded-xl border border-slate-800 flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-white text-base">Portal 2</h4>
+                            <span class="text-xs font-mono text-amber-400"><i class="fa-solid fa-star"></i> 10/10</span>
+                        </div>
+                        <p class="text-slate-400 text-xs mt-1">Geniální puzzle mechaniky, ikonický humor a nezapomenutelná GLaDOS.</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded text-[10px] font-mono bg-blue-500/10 text-blue-300 border border-blue-500/20 whitespace-nowrap">Puzzle Sci-Fi</span>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-800 bg-space-900/80 flex justify-between items-center text-xs font-mono text-slate-400">
+                <span>Celkem odehráno: 100+ her na streamu</span>
+                <button onclick="closeVaultModal()" class="px-4 py-2 rounded-lg bg-space-800 hover:bg-space-700 text-white transition">Zavřít Archiv</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Interactive: Inspektor Zentan Writing Progress -->
+    <div id="zentan-modal" class="fixed inset-0 z-50 bg-space-950/90 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="glass-station w-full max-w-3xl rounded-3xl border border-pink-500/40 max-h-[88vh] flex flex-col overflow-hidden shadow-2xl relative">
+            
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-space-900/90">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center text-pink-400">
+                        <i class="fa-solid fa-feather-pointed text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-display font-bold text-white text-lg">Inspektor Zentan</h3>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-pink-500/20 text-pink-300 border border-pink-500/30">NOIR MANUSCRIPT</span>
+                        </div>
+                        <p class="text-xs font-mono text-slate-400">Stav psaní knižní série a rozepsaných kapitol</p>
+                    </div>
+                </div>
+                <button onclick="closeZentanModal()" class="text-slate-400 hover:text-white p-2 text-xl transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-6 overflow-y-auto space-y-6 font-sans">
+
+                <!-- Overall Progress Bar & Main Stats -->
+                <div class="bg-space-900/80 p-5 rounded-2xl border border-pink-500/30 space-y-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <div>
+                            <span class="text-[10px] font-mono text-pink-400 uppercase tracking-widest">Aktuální stav tvorby</span>
+                            <h4 class="font-display font-bold text-white text-xl">Kapitola 6 / ? <span class="text-xs font-mono font-normal text-pink-300/80">(Načrtnuto & Rozepsáno)</span></h4>
+                        </div>
+                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-300 font-mono text-xs">
+                            <i class="fa-solid fa-spinner animate-spin text-[11px]"></i> Active Draft in Progress
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div>
+                        <div class="flex justify-between text-xs font-mono text-slate-400 mb-1.5">
+                            <span>Průběh psaní rukopisu</span>
+                            <span class="text-pink-300 font-bold">Kapitola 6 (~45 %)</span>
+                        </div>
+                        <div class="w-full h-3 bg-space-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                            <div class="h-full bg-gradient-to-r from-pink-600 via-pink-500 to-purple-500 rounded-full transition-all duration-500" style="width: 45%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-800/80 font-mono text-xs">
+                        <div class="bg-space-950/60 p-2.5 rounded-xl border border-slate-800/60 text-center">
+                            <span class="text-[10px] text-slate-500 block">DOKONČENÉ KAPITOLY</span>
+                            <span class="font-bold text-white text-sm">1 – 5</span>
+                        </div>
+                        <div class="bg-space-950/60 p-2.5 rounded-xl border border-slate-800/60 text-center">
+                            <span class="text-[10px] text-slate-500 block">ODHAD SLOV</span>
+                            <span class="font-bold text-pink-400 text-sm">~8,450</span>
+                        </div>
+                        <div class="bg-space-950/60 p-2.5 rounded-xl border border-slate-800/60 text-center">
+                            <span class="text-[10px] text-slate-500 block">ŽÁNR</span>
+                            <span class="font-bold text-slate-200 text-xs">Noir Detektivka</span>
+                        </div>
+                        <div class="bg-space-950/60 p-2.5 rounded-xl border border-slate-800/60 text-center">
+                            <span class="text-[10px] text-slate-500 block">JAZYK</span>
+                            <span class="font-bold text-slate-200 text-xs">Čeština</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teaser Quote Snippet -->
+                <div class="p-5 rounded-2xl bg-gradient-to-br from-pink-950/30 to-space-900 border-l-4 border-pink-500 border-y border-r border-slate-800 relative">
+                    <i class="fa-solid fa-quote-left absolute top-3 right-4 text-3xl text-pink-500/10"></i>
+                    <span class="text-[10px] font-mono text-pink-400 uppercase tracking-widest block mb-2">Ukázka z rukopisu // Kapitola 3</span>
+                    <p class="text-slate-300 italic text-xs md:text-sm leading-relaxed">
+                        „Eleniny oči se zarývali Zentanovi pod kůži, ví, že kdyby mu lhala, tak to pozná, už na střední byla dobrá v čtení lidské psychiky. Musí mu říct že Lenya umřela, to je jediné co ví jistě, i když tím riskuje, že si ji pustí až moc zpátky do života.“
+                    </p>
+                </div>
+
+                <!-- Main Characters Section -->
+                <div>
+                    <h4 class="font-display font-bold text-white text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-users text-pink-400 text-xs"></i> Klíčové Postavy Příběhu
+                    </h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+                        <div class="bg-space-900/60 p-3 rounded-xl border border-slate-800">
+                            <span class="font-bold text-white block">Inspektor Zentan</span>
+                            <span class="text-[10px] text-pink-400">Hlavní vyšetřovatel</span>
+                        </div>
+                        <div class="bg-space-900/60 p-3 rounded-xl border border-slate-800">
+                            <span class="font-bold text-white block">Lenyia</span>
+                            <span class="text-[10px] text-purple-400">Žena Zentana</span>
+                        </div>
+                        <div class="bg-space-900/60 p-3 rounded-xl border border-slate-800">
+                            <span class="font-bold text-white block">Kaelen</span>
+                            <span class="text-[10px] text-slate-400">Dávný známý Zentana</span>
+                        </div>
+                        <div class="bg-space-900/60 p-3 rounded-xl border border-slate-800">
+                            <span class="font-bold text-white block">Elen</span>
+                            <span class="text-[10px] text-amber-400">Stará Zentanova Láska</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chapter Breakdown Timeline -->
+                <div>
+                    <h4 class="font-display font-bold text-white text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-list-ol text-pink-400 text-xs"></i> Rozpis Kapitol
+                    </h4>
+
+                    <div class="space-y-2 font-mono text-xs">
+                        <!-- Kapitola 1-5 -->
+                        <div class="bg-space-900/60 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs">
+                                    <i class="fa-solid fa-check"></i>
+                                </span>
+                                <div>
+                                    <h5 class="font-bold text-white">Kapitola 1 – 5</h5>
+                                    <p class="text-[11px] text-slate-400 font-sans">Úvod do příběhu</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">Dokončeno</span>
+                        </div>
+
+                        <!-- Kapitola 6 -->
+                        <div class="bg-space-900 p-3.5 rounded-xl border border-pink-500/50 flex items-center justify-between gap-3 shadow-lg shadow-pink-500/5">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-lg bg-pink-500/20 text-pink-400 border border-pink-500/40 flex items-center justify-center font-bold text-xs animate-pulse">
+                                    6
+                                </span>
+                                <div>
+                                    <h5 class="font-bold text-white flex items-center gap-2">
+                                        Kapitola 6 - ? <span class="text-[10px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-300">ROZEPSÁNO</span>
+                                    </h5>
+                                    <p class="text-[11px] text-slate-300 font-sans">Hledání odpovedí na otázky.</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 rounded text-[10px] bg-pink-500/20 text-pink-300 border border-pink-500/40 whitespace-nowrap">V procesu</span>
+                        </div>
+
+                        <!-- Kapitola 7 -->
+                        <div class="bg-space-900/40 p-3.5 rounded-xl border border-slate-800/80 flex items-center justify-between gap-3 opacity-75">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-lg bg-space-800 text-slate-500 flex items-center justify-center font-bold text-xs">
+                                    7
+                                </span>
+                                <div>
+                                    <h5 class="font-bold text-slate-300">Kapitola ? - ?</h5>
+                                    <p class="text-[11px] text-slate-500 font-sans">Vyvrcholení příběhu.</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 rounded text-[10px] bg-space-800 text-slate-500 whitespace-nowrap">V plánu</span>
+                        </div>
+
+                        <!-- Kapitola 8+ -->
+                        <div class="bg-space-900/30 p-3.5 rounded-xl border border-slate-800/50 flex items-center justify-between gap-3 opacity-60">
+                            <div class="flex items-center gap-3">
+                                <span class="w-7 h-7 rounded-lg bg-space-800 text-slate-600 flex items-center justify-center font-bold text-xs">
+                                    ?
+                                </span>
+                                <div>
+                                    <h5 class="font-bold text-slate-400">Finále</h5>
+                                    <p class="text-[11px] text-slate-600 font-sans">Závěr příběhu.</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 rounded text-[10px] bg-space-800 text-slate-600 whitespace-nowrap">Koncept</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-800 bg-space-900/90 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs font-mono text-slate-400">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-pink-400 animate-ping"></span>
+                    <span>Stav manuskriptu: <strong class="text-pink-300">Kapitola 6 / ? (Aktivní tvorba)</strong></span>
+                </div>
+                <button onclick="closeZentanModal()" class="w-full sm:w-auto px-5 py-2 rounded-lg bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/40 transition font-bold">
+                    Zavřít
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-space-800 py-8 px-6 text-center text-slate-500 text-xs font-mono">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2 text-slate-300">
+                <i class="fa-solid fa-cat text-cyber-cyan"></i>
+                <span class="font-display font-bold">BLUECAT DEEP SPACE STATION</span>
+            </div>
+            <p>© <span id="year"></span> Bluecat. Všechna práva vyhrazena.</p>
+            <a href="#" class="hover:text-cyber-cyan transition flex items-center gap-1">
+                TOP <i class="fa-solid fa-angle-up"></i>
+            </a>
+        </div>
+    </footer>
+
+    <!-- Interactive Scripts -->
+    <script>
+        // Set dynamic year
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Canvas Space Particles Animation
+        const canvas = document.getElementById('space-canvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initStars();
+        }
+
+        function initStars() {
+            stars = [];
+            const count = Math.floor((canvas.width * canvas.height) / 7000);
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.5,
+                    alpha: Math.random(),
+                    speed: Math.random() * 0.3 + 0.05
+                });
+            }
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 240, 255, ${star.alpha})`;
+                ctx.fill();
+
+                star.y -= star.speed;
+                if (star.y < 0) {
+                    star.y = canvas.height;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+            requestAnimationFrame(animateStars);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animateStars();
+
+        // Mobile Menu Toggle
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+
+        // Filter Functionality for Projects
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const projectCards = document.querySelectorAll('.project-card');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-cyber-cyan', 'text-space-950');
+                    b.classList.add('bg-space-800', 'text-slate-300');
+                });
+                btn.classList.add('active', 'bg-cyber-cyan', 'text-space-950');
+                btn.classList.remove('bg-space-800', 'text-slate-300');
+
+                const filter = btn.getAttribute('data-filter');
+                projectCards.forEach(card => {
+                    if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Copy Email Logic
+        const copyBtn = document.getElementById('copy-btn');
+        const copyBtnText = document.getElementById('copy-btn-text');
+        const copyToast = document.getElementById('copy-toast');
+        const emailText = document.getElementById('email-text').textContent;
+
+        copyBtn.addEventListener('click', () => {
+            const temp = document.createElement('input');
+            temp.value = emailText;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+
+            copyBtnText.textContent = 'OK!';
+            copyToast.classList.remove('hidden');
+
+            setTimeout(() => {
+                copyBtnText.textContent = 'Kopírovat';
+                copyToast.classList.add('hidden');
+            }, 3000);
+        });
+
+        // Story Game Vault Modal Functions
+        function openVaultModal() {
+            document.getElementById('vault-modal').classList.remove('hidden');
+            document.getElementById('vault-modal').classList.add('flex');
+        }
+
+        function closeVaultModal() {
+            document.getElementById('vault-modal').classList.add('hidden');
+            document.getElementById('vault-modal').classList.remove('flex');
+        }
+
+        // Inspektor Zentan Progress Modal Functions
+        function openZentanModal() {
+            document.getElementById('zentan-modal').classList.remove('hidden');
+            document.getElementById('zentan-modal').classList.add('flex');
+        }
+
+        function closeZentanModal() {
+            document.getElementById('zentan-modal').classList.add('hidden');
+            document.getElementById('zentan-modal').classList.remove('flex');
+        }
+    </script>
+</body>
+</html>
