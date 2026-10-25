@@ -11,7 +11,7 @@
     <!-- Google Fonts: Orbitron & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;800;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -20,6 +20,7 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                         display: ['Orbitron', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
                     },
                     colors: {
                         space: {
@@ -62,6 +63,7 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 240, 255, 0.12);
+            transition: all 0.3s ease;
         }
         .glass-station:hover {
             border-color: rgba(0, 240, 255, 0.4);
@@ -98,6 +100,11 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #00F0FF;
         }
+        /* CRT Terminal overlay effect */
+        .crt-screen {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 6px 100%;
+        }
     </style>
 </head>
 <body class="bg-space-950 text-slate-200 font-sans antialiased selection:bg-cyber-cyan selection:text-space-950 min-h-screen flex flex-col justify-between overflow-x-hidden relative">
@@ -113,7 +120,7 @@
     <header class="fixed top-0 left-0 right-0 z-50 glass-nav transition-all duration-300">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <!-- Station Logo -->
-            <a href="#" class="flex items-center gap-3 group">
+            <a href="#" onclick="playSfx('click')" class="flex items-center gap-3 group">
                 <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyber-cyan via-cyber-blue to-cyber-purple p-0.5 shadow-lg shadow-cyber-cyan/20 group-hover:shadow-cyber-purple/40 transition duration-300">
                     <div class="w-full h-full bg-space-950 rounded-[7px] flex items-center justify-center">
                         <i class="fa-solid fa-cat text-cyber-cyan group-hover:text-cyber-purple transition"></i>
@@ -126,27 +133,40 @@
             </a>
 
             <!-- Navigation Links -->
-            <nav class="hidden md:flex items-center gap-8 font-medium text-slate-300 text-sm tracking-wide">
-                <a href="#about" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-user-astronaut text-xs mr-1 text-cyber-cyan"></i> O mně</a>
-                <a href="#stack" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-microchip text-xs mr-1 text-cyber-cyan"></i> Tech Stack</a>
-                <a href="#projects" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-code text-xs mr-1 text-cyber-cyan"></i> Projekty</a>
-                <a href="#vault" onclick="openVaultModal()" class="hover:text-cyber-cyan transition text-cyber-purple font-semibold"><i class="fa-solid fa-gamepad text-xs mr-1"></i> Game Vault</a>
-                <a href="#contact" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-wifi text-xs mr-1 text-cyber-cyan"></i> Kontakt</a>
+            <nav class="hidden md:flex items-center gap-7 font-medium text-slate-300 text-sm tracking-wide">
+                <a href="#about" onclick="playSfx('click')" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-user-astronaut text-xs mr-1 text-cyber-cyan"></i> O mně</a>
+                <a href="#stack" onclick="playSfx('click')" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-microchip text-xs mr-1 text-cyber-cyan"></i> Tech Stack</a>
+                <a href="#projects" onclick="playSfx('click')" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-code text-xs mr-1 text-cyber-cyan"></i> Projekty</a>
+                <a href="#vault" onclick="openVaultModal(); playSfx('click'); return false;" class="hover:text-cyber-cyan transition text-cyber-purple font-semibold"><i class="fa-solid fa-gamepad text-xs mr-1"></i> Game Vault</a>
+                <a href="#contact" onclick="playSfx('click')" class="hover:text-cyber-cyan transition"><i class="fa-solid fa-wifi text-xs mr-1 text-cyber-cyan"></i> Kontakt</a>
             </nav>
 
-            <!-- Status Indicator & CTA -->
-            <div class="flex items-center gap-4">
+            <!-- Status Indicator, Audio Toggle & Terminal CTA -->
+            <div class="flex items-center gap-3">
+                <!-- Sound Effects Toggle Button -->
+                <button id="sfx-toggle-btn" onclick="toggleSfx()" class="p-2 rounded-lg bg-space-900 border border-slate-800 text-slate-400 hover:text-cyber-cyan transition text-xs font-mono flex items-center gap-1.5" title="Zvukové efekty">
+                    <i id="sfx-icon" class="fa-solid fa-volume-high text-cyber-cyan"></i>
+                    <span id="sfx-status" class="hidden sm:inline">FX ON</span>
+                </button>
+
+                <!-- CLI Terminal Modal Launcher -->
+                <button onclick="openTerminalModal(); playSfx('open');" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-space-900 border border-cyber-cyan/30 text-cyber-cyan hover:bg-cyber-cyan/10 font-mono text-xs transition">
+                    <i class="fa-solid fa-terminal"></i>
+                    <span>CLI [Ctrl+~]</span>
+                </button>
+
+                <!-- Status Badge -->
                 <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-space-900 border border-emerald-500/30 text-xs text-emerald-400 font-mono">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                     <span>SYSTEM ONLINE</span>
                 </div>
 
-                <a href="#contact" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple text-space-950 shadow-lg shadow-cyber-cyan/20 hover:shadow-cyber-cyan/40 hover:scale-[1.02] active:scale-[0.98] transition">
-                    <i class="fa-solid fa-terminal"></i> Spojit se
+                <a href="#contact" onclick="playSfx('click')" class="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple text-space-950 shadow-lg shadow-cyber-cyan/20 hover:shadow-cyber-cyan/40 hover:scale-[1.02] active:scale-[0.98] transition">
+                    <i class="fa-solid fa-wifi"></i> Spojit se
                 </a>
 
                 <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-slate-300 hover:bg-space-800 transition" aria-label="Menu">
+                <button id="mobile-menu-btn" onclick="playSfx('click')" class="md:hidden p-2 rounded-lg text-slate-300 hover:bg-space-800 transition" aria-label="Menu">
                     <i class="fa-solid fa-bars-staggered text-xl"></i>
                 </button>
             </div>
@@ -154,11 +174,12 @@
 
         <!-- Mobile Menu Dropdown -->
         <div id="mobile-menu" class="hidden md:hidden border-t border-space-800 bg-space-950/95 px-6 py-4 flex flex-col gap-4 font-mono text-sm">
-            <a href="#about" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-user-astronaut mr-2 text-cyber-cyan"></i>O mně</a>
-            <a href="#stack" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-microchip mr-2 text-cyber-cyan"></i>Tech Stack</a>
-            <a href="#projects" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-code mr-2 text-cyber-cyan"></i>Projekty</a>
-            <a href="#" onclick="openVaultModal()" class="mobile-link text-cyber-purple hover:text-cyber-cyan py-1"><i class="fa-solid fa-gamepad mr-2"></i>Story Game Vault</a>
-            <a href="#contact" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-wifi mr-2 text-cyber-cyan"></i>Kontakt</a>
+            <a href="#about" onclick="playSfx('click')" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-user-astronaut mr-2 text-cyber-cyan"></i>O mně</a>
+            <a href="#stack" onclick="playSfx('click')" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-microchip mr-2 text-cyber-cyan"></i>Tech Stack</a>
+            <a href="#projects" onclick="playSfx('click')" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-code mr-2 text-cyber-cyan"></i>Projekty</a>
+            <a href="#" onclick="openVaultModal(); playSfx('click'); return false;" class="mobile-link text-cyber-purple hover:text-cyber-cyan py-1"><i class="fa-solid fa-gamepad mr-2"></i>Story Game Vault</a>
+            <a href="#" onclick="openTerminalModal(); playSfx('open'); return false;" class="mobile-link text-cyber-cyan hover:text-white py-1"><i class="fa-solid fa-terminal mr-2"></i>Spustit Terminal CLI</a>
+            <a href="#contact" onclick="playSfx('click')" class="mobile-link text-slate-300 hover:text-cyber-cyan py-1"><i class="fa-solid fa-wifi mr-2 text-cyber-cyan"></i>Kontakt</a>
         </div>
     </header>
 
@@ -174,7 +195,7 @@
                 </div>
 
                 <!-- Avatar Emblem -->
-                <div class="relative mb-8 group">
+                <div class="relative mb-8 group cursor-pointer" onclick="playSfx('meow')">
                     <div class="absolute -inset-2 bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple rounded-3xl blur-xl opacity-70 group-hover:opacity-100 transition duration-700"></div>
                     <div class="relative w-36 h-36 md:w-44 md:h-44 rounded-2xl bg-space-900 border-2 border-cyber-cyan/40 flex items-center justify-center shadow-2xl overflow-hidden glass-station">
                         <i class="fa-solid fa-cat text-6xl md:text-7xl text-cyber-cyan group-hover:scale-110 transition duration-500 text-cyan-glow"></i>
@@ -195,13 +216,13 @@
 
                 <!-- Hero Action Buttons -->
                 <div class="flex flex-wrap justify-center gap-4 font-mono text-xs sm:text-sm">
-                    <a href="#projects" class="px-6 py-3.5 rounded-xl font-bold bg-gradient-to-r from-cyber-cyan to-cyber-blue text-space-950 hover:shadow-lg hover:shadow-cyber-cyan/30 hover:scale-105 active:scale-95 transition flex items-center gap-2">
+                    <a href="#projects" onclick="playSfx('click')" class="px-6 py-3.5 rounded-xl font-bold bg-gradient-to-r from-cyber-cyan to-cyber-blue text-space-950 hover:shadow-lg hover:shadow-cyber-cyan/30 hover:scale-105 active:scale-95 transition flex items-center gap-2">
                         <i class="fa-solid fa-rocket"></i> Prozkoumat Stanici
                     </a>
-                    <a href="#astra" class="px-6 py-3.5 rounded-xl font-bold glass-station text-white hover:border-cyber-purple transition hover:scale-105 active:scale-95 flex items-center gap-2">
+                    <a href="#astra" onclick="playSfx('click')" class="px-6 py-3.5 rounded-xl font-bold glass-station text-white hover:border-cyber-purple transition hover:scale-105 active:scale-95 flex items-center gap-2">
                         <i class="fa-solid fa-robot text-cyber-purple"></i> Astra
                     </a>
-                    <button onclick="openVaultModal()" class="px-6 py-3.5 rounded-xl font-bold bg-space-800 border border-cyber-purple/40 text-cyber-purple hover:bg-cyber-purple/10 transition hover:scale-105 active:scale-95 flex items-center gap-2">
+                    <button onclick="openVaultModal(); playSfx('open');" class="px-6 py-3.5 rounded-xl font-bold bg-space-800 border border-cyber-purple/40 text-cyber-purple hover:bg-cyber-purple/10 transition hover:scale-105 active:scale-95 flex items-center gap-2">
                         <i class="fa-solid fa-vault"></i> Story Game Vault
                     </button>
                 </div>
@@ -221,7 +242,7 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Column 1: Dev Persona -->
-                    <div class="space-y-4 bg-space-900/60 p-6 rounded-2xl border border-slate-800">
+                    <div class="space-y-4 bg-space-900/60 p-6 rounded-2xl border border-slate-800 hover:border-cyber-cyan/30 transition">
                         <div class="w-10 h-10 rounded-lg bg-cyber-blue/10 border border-cyber-blue/30 flex items-center justify-center text-cyber-cyan text-xl">
                             <i class="fa-solid fa-code"></i>
                         </div>
@@ -232,7 +253,7 @@
                     </div>
 
                     <!-- Column 2: Streamer Persona -->
-                    <div class="space-y-4 bg-space-900/60 p-6 rounded-2xl border border-slate-800">
+                    <div class="space-y-4 bg-space-900/60 p-6 rounded-2xl border border-slate-800 hover:border-cyber-purple/30 transition">
                         <div class="w-10 h-10 rounded-lg bg-cyber-purple/10 border border-cyber-purple/30 flex items-center justify-center text-cyber-purple text-xl">
                             <i class="fa-brands fa-twitch"></i>
                         </div>
@@ -243,7 +264,7 @@
                     </div>
 
                     <!-- Column 3: Writer Persona -->
-                    <div class="space-y-4 bg-space-900/60 p-6 rounded-2xl border border-slate-800">
+                    <div class="space-y-4 bg-space-900/60 p-6 rounded-2xl border border-slate-800 hover:border-pink-500/30 transition">
                         <div class="w-10 h-10 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 text-xl">
                             <i class="fa-solid fa-book-bookmark"></i>
                         </div>
@@ -265,7 +286,7 @@
                 <h2 class="font-display text-3xl font-bold text-white">Technologická Výbava</h2>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div class="glass-station p-4 rounded-xl text-center flex flex-col items-center justify-center gap-2">
                     <i class="fa-brands fa-python text-3xl text-amber-400"></i>
                     <span class="font-mono text-xs font-bold text-white">Python 3.11+</span>
@@ -285,6 +306,7 @@
                     <i class="fa-brands fa-linux text-3xl text-slate-200"></i>
                     <span class="font-mono text-xs font-bold text-white">Hetzner VPS</span>
                     <span class="text-[10px] text-slate-400">Linux Server</span>
+                </div>
                 <div class="glass-station p-4 rounded-xl text-center flex flex-col items-center justify-center gap-2">
                     <i class="fa-brands fa-html5 text-3xl text-orange-400"></i>
                     <span class="font-mono text-xs font-bold text-white">Web Stack</span>
@@ -304,9 +326,9 @@
 
                 <!-- Filter Tabs -->
                 <div class="flex flex-wrap justify-center gap-2 mt-8 font-mono text-xs">
-                    <button data-filter="all" class="filter-btn active px-4 py-2 rounded-lg font-bold bg-cyber-cyan text-space-950 transition">Vše</button>
-                    <button data-filter="bots" class="filter-btn px-4 py-2 rounded-lg bg-space-800 text-slate-300 hover:text-white border border-slate-700/60 transition">Discord Boti</button>
-                    <button data-filter="lore" class="filter-btn px-4 py-2 rounded-lg bg-space-800 text-slate-300 hover:text-white border border-slate-700/60 transition">Příběhy & D&D</button>
+                    <button data-filter="all" onclick="playSfx('click')" class="filter-btn active px-4 py-2 rounded-lg font-bold bg-cyber-cyan text-space-950 transition">Vše</button>
+                    <button data-filter="bots" onclick="playSfx('click')" class="filter-btn px-4 py-2 rounded-lg bg-space-800 text-slate-300 hover:text-white border border-slate-700/60 transition">Discord Boti</button>
+                    <button data-filter="lore" onclick="playSfx('click')" class="filter-btn px-4 py-2 rounded-lg bg-space-800 text-slate-300 hover:text-white border border-slate-700/60 transition">Příběhy & D&D</button>
                 </div>
             </div>
 
@@ -336,10 +358,10 @@
                         </div>
                         <!-- Bot Quick Action Buttons -->
                         <div class="grid grid-cols-2 gap-2 mb-3">
-                            <a href="https://discord.com/api/oauth2/authorize?client_id=883325865474269192&permissions=8&scope=bot%20applications.commands" target="_blank" class="py-2 px-3 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/40 text-xs font-mono text-indigo-300 hover:text-white transition flex items-center justify-center gap-1.5 text-center">
+                            <a href="https://discord.com/api/oauth2/authorize?client_id=883325865474269192&permissions=8&scope=bot%20applications.commands" target="_blank" onclick="playSfx('click')" class="py-2 px-3 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/40 text-xs font-mono text-indigo-300 hover:text-white transition flex items-center justify-center gap-1.5 text-center">
                                 <i class="fa-brands fa-discord"></i> Přidat Astra
                             </a>
-                            <a href="http://167.233.23.169:5000/" target="_blank" class="py-2 px-3 rounded-lg bg-cyber-cyan/20 hover:bg-cyber-cyan/40 border border-cyber-cyan/40 text-xs font-mono text-cyber-cyan hover:text-white transition flex items-center justify-center gap-1.5 text-center">
+                            <a href="http://167.233.23.169:5000/" target="_blank" onclick="playSfx('click')" class="py-2 px-3 rounded-lg bg-cyber-cyan/20 hover:bg-cyber-cyan/40 border border-cyber-cyan/40 text-xs font-mono text-cyber-cyan hover:text-white transition flex items-center justify-center gap-1.5 text-center">
                                 <i class="fa-solid fa-gauge-high"></i> Dashboard
                             </a>
                         </div>
@@ -363,7 +385,7 @@
                             <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Webhooks</span>
                             <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Twitch API</span>
                         </div>
-                        <a href="https://discord.gg/RNQKGPt6bJ" target="_blank" class="text-xs font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                        <a href="https://discord.gg/RNQKGPt6bJ" target="_blank" onclick="playSfx('click')" class="text-xs font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
                             Vstoupit na Stanici <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </a>
                     </div>
@@ -386,7 +408,7 @@
                             <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Detektivka</span>
                             <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Psychologické</span>
                         </div>
-                        <button onclick="openZentanModal()" class="w-full py-2 px-3 rounded-lg bg-pink-500/15 hover:bg-pink-500/30 border border-pink-500/40 text-xs font-mono text-pink-300 hover:text-white transition flex items-center justify-center gap-2">
+                        <button onclick="openZentanModal(); playSfx('open');" class="w-full py-2 px-3 rounded-lg bg-pink-500/15 hover:bg-pink-500/30 border border-pink-500/40 text-xs font-mono text-pink-300 hover:text-white transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-scroll"></i> Zobrazit Postup Psaní
                         </button>
                     </div>
@@ -416,7 +438,7 @@
                 </div>
 
                 <!-- Stream Game Tracker -->
-                <div class="project-card glass-station rounded-2xl p-6 flex flex-col justify-between" data-category="games">
+                <div class="project-card glass-station rounded-2xl p-6 flex flex-col justify-between" data-category="lore">
                     <div>
                         <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl mb-4">
                             <i class="fa-solid fa-list-check"></i>
@@ -432,7 +454,7 @@
                             <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Recenze</span>
                             <span class="px-2 py-0.5 rounded bg-space-900 text-slate-300">Twitch Archive</span>
                         </div>
-                        <button onclick="openVaultModal()" class="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                        <button onclick="openVaultModal(); playSfx('open');" class="text-xs font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
                             Otevřít archiv her <i class="fa-solid fa-folder-open text-[10px]"></i>
                         </button>
                     </div>
@@ -452,35 +474,35 @@
             </div>
 
             <!-- Social Media Cards -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
-                <a href="https://twitch.tv/bluecatlive" target="_blank" class="glass-station p-6 rounded-2xl flex flex-col items-center justify-center text-center group transition">
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-12">
+                <a href="https://twitch.tv/bluecatlive" target="_blank" onclick="playSfx('click')" class="glass-station p-5 rounded-2xl flex flex-col items-center justify-center text-center group transition">
                     <i class="fa-brands fa-twitch text-3xl text-purple-400 group-hover:scale-110 transition mb-3"></i>
                     <span class="font-bold text-white font-display text-sm">Twitch</span>
-                    <span class="text-[11px] font-mono text-slate-400 mt-1">Live Vysílání</span>
+                    <span class="text-[10px] font-mono text-slate-400 mt-1">Live Vysílání</span>
                 </a>
 
-                <a href="https://www.instagram.com/bluecat221/" target="_blank" rel="noopener noreferrer" class="glass-station p-6 rounded-2xl flex flex-col items-center justify-center text-center group transition hover:border-pink-500/50">
+                <a href="https://www.instagram.com/bluecat221/" target="_blank" rel="noopener noreferrer" onclick="playSfx('click')" class="glass-station p-5 rounded-2xl flex flex-col items-center justify-center text-center group transition hover:border-pink-500/50">
                     <i class="fa-brands fa-instagram text-3xl text-pink-400 group-hover:scale-110 transition mb-3"></i>
                     <span class="font-bold text-white font-display text-sm">Instagram</span>
-                    <span class="text-[11px] font-mono text-slate-400 mt-1">@bluecat221</span>
+                    <span class="text-[10px] font-mono text-slate-400 mt-1">@bluecat221</span>
                 </a>
 
-                <a href="https://discord.gg/RNQKGPt6bJ" target="_blank" class="glass-station p-6 rounded-2xl flex flex-col items-center justify-center text-center group transition">
+                <a href="https://discord.gg/RNQKGPt6bJ" target="_blank" onclick="playSfx('click')" class="glass-station p-5 rounded-2xl flex flex-col items-center justify-center text-center group transition">
                     <i class="fa-brands fa-discord text-3xl text-indigo-400 group-hover:scale-110 transition mb-3"></i>
                     <span class="font-bold text-white font-display text-sm">Discord</span>
-                    <span class="text-[11px] font-mono text-slate-400 mt-1">Komunitní Server</span>
+                    <span class="text-[10px] font-mono text-slate-400 mt-1">Komunita</span>
                 </a>
 
-                <a href="https://github.com/bluecat201" target="_blank" class="glass-station p-6 rounded-2xl flex flex-col items-center justify-center text-center group transition">
+                <a href="https://github.com/bluecat201" target="_blank" onclick="playSfx('click')" class="glass-station p-5 rounded-2xl flex flex-col items-center justify-center text-center group transition">
                     <i class="fa-brands fa-github text-3xl text-slate-200 group-hover:scale-110 transition mb-3"></i>
                     <span class="font-bold text-white font-display text-sm">GitHub</span>
-                    <span class="text-[11px] font-mono text-slate-400 mt-1">Zdrojové Kódy</span>
+                    <span class="text-[10px] font-mono text-slate-400 mt-1">Zdrojové Kódy</span>
                 </a>
 
-                <a href="https://youtube.com/@bluecatstudios201" target="_blank" class="glass-station p-6 rounded-2xl flex flex-col items-center justify-center text-center group transition">
+                <a href="https://youtube.com/@bluecatstudios201" target="_blank" onclick="playSfx('click')" class="glass-station p-5 rounded-2xl flex flex-col items-center justify-center text-center group transition col-span-2 sm:col-span-1">
                     <i class="fa-brands fa-youtube text-3xl text-red-500 group-hover:scale-110 transition mb-3"></i>
                     <span class="font-bold text-white font-display text-sm">YouTube</span>
-                    <span class="text-[11px] font-mono text-slate-400 mt-1">Klipy ze streamů</span>
+                    <span class="text-[10px] font-mono text-slate-400 mt-1">Klipy ze streamů</span>
                 </a>
             </div>
 
@@ -507,6 +529,36 @@
         </section>
     </main>
 
+    <!-- Modal Interactive: Cyber CLI Terminal -->
+    <div id="terminal-modal" class="fixed inset-0 z-50 bg-space-950/90 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="glass-station w-full max-w-2xl rounded-2xl border border-cyber-cyan/40 flex flex-col overflow-hidden shadow-2xl relative crt-screen">
+            <!-- Terminal Header -->
+            <div class="px-4 py-3 bg-space-900 border-b border-slate-800 flex items-center justify-between font-mono text-xs">
+                <div class="flex items-center gap-2 text-cyber-cyan">
+                    <i class="fa-solid fa-terminal"></i>
+                    <span class="font-bold">BLUECAT_STATION_CLI // v2.4</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-500">Press ESC or type 'exit'</span>
+                    <button onclick="closeTerminalModal(); playSfx('click');" class="text-slate-400 hover:text-white px-2 py-0.5 rounded hover:bg-space-800 transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Terminal Screen -->
+            <div id="terminal-output" class="p-4 h-80 overflow-y-auto font-mono text-xs space-y-2 text-slate-300 leading-relaxed">
+                <div class="text-cyber-cyan">Vesmírný Terminál Stanice BLUECAT připraven.</div>
+                <div class="text-slate-500">Napiš <span class="text-white font-bold">'help'</span> pro seznam příkazů.</div>
+            </div>
+            <!-- Terminal Input Line -->
+            <form id="terminal-form" onsubmit="handleTerminalSubmit(event)" class="px-4 py-3 bg-space-900/90 border-t border-slate-800 flex items-center gap-2 font-mono text-xs">
+                <span class="text-cyber-cyan font-bold">bluecat@station:~$</span>
+                <input id="terminal-input" type="text" autocomplete="off" class="flex-grow bg-transparent text-white focus:outline-none font-mono" placeholder="Zadej příkaz..." />
+                <button type="submit" class="text-cyber-cyan hover:text-white px-2 py-1 bg-cyber-cyan/10 rounded transition">Send</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Interactive: Story Game Vault -->
     <div id="vault-modal" class="fixed inset-0 z-50 bg-space-950/90 backdrop-blur-md hidden items-center justify-center p-4">
         <div class="glass-station w-full max-w-3xl rounded-3xl border border-cyber-purple/40 max-h-[85vh] flex flex-col overflow-hidden shadow-2xl relative">
@@ -522,7 +574,7 @@
                         <p class="text-xs font-mono text-slate-400">Nejoblíbenější atmosférické & příběhové srdcovky</p>
                     </div>
                 </div>
-                <button onclick="closeVaultModal()" class="text-slate-400 hover:text-white p-2 text-xl transition">
+                <button onclick="closeVaultModal(); playSfx('click');" class="text-slate-400 hover:text-white p-2 text-xl transition">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -531,7 +583,7 @@
             <div class="p-6 overflow-y-auto space-y-4 font-sans">
 
                 <!-- Full Master List Link Banner -->
-                <a href="https://bluecat201.github.io/finishedgames/" target="_blank" rel="noopener noreferrer" class="group block p-4 rounded-2xl bg-gradient-to-r from-cyber-purple/20 via-cyber-blue/20 to-cyber-cyan/20 border border-cyber-purple/50 hover:border-cyber-cyan transition-all duration-300 shadow-lg shadow-cyber-purple/10 hover:shadow-cyber-cyan/20 relative overflow-hidden">
+                <a href="https://bluecat201.github.io/finishedgames/" target="_blank" rel="noopener noreferrer" onclick="playSfx('click')" class="group block p-4 rounded-2xl bg-gradient-to-r from-cyber-purple/20 via-cyber-blue/20 to-cyber-cyan/20 border border-cyber-purple/50 hover:border-cyber-cyan transition-all duration-300 shadow-lg shadow-cyber-purple/10 hover:shadow-cyber-cyan/20 relative overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-cyber-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
                         <div class="flex items-center gap-3">
@@ -574,7 +626,7 @@
                         </div>
                         <p class="text-slate-400 text-xs mt-1">Hluboký sci-fi psychologický zážitek z hlubin oceánu s neuvěřitelnou atmosférou.</p>
                     </div>
-                    <span class="px-2.5 py-1 rounded text-[10px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 whitespace-nowrap">Sci-Fi Sci-Fi</span>
+                    <span class="px-2.5 py-1 rounded text-[10px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 whitespace-nowrap">Sci-Fi Horror</span>
                 </div>
 
                 <!-- Game Item 3 -->
@@ -618,7 +670,7 @@
             <!-- Modal Footer -->
             <div class="p-4 border-t border-slate-800 bg-space-900/80 flex justify-between items-center text-xs font-mono text-slate-400">
                 <span>Celkem odehráno: 100+ her na streamu</span>
-                <button onclick="closeVaultModal()" class="px-4 py-2 rounded-lg bg-space-800 hover:bg-space-700 text-white transition">Zavřít Archiv</button>
+                <button onclick="closeVaultModal(); playSfx('click');" class="px-4 py-2 rounded-lg bg-space-800 hover:bg-space-700 text-white transition">Zavřít Archiv</button>
             </div>
         </div>
     </div>
@@ -641,7 +693,7 @@
                         <p class="text-xs font-mono text-slate-400">Stav psaní knižní série a rozepsaných kapitol</p>
                     </div>
                 </div>
-                <button onclick="closeZentanModal()" class="text-slate-400 hover:text-white p-2 text-xl transition">
+                <button onclick="closeZentanModal(); playSfx('click');" class="text-slate-400 hover:text-white p-2 text-xl transition">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -758,7 +810,7 @@
                                     <h5 class="font-bold text-white flex items-center gap-2">
                                         Kapitola 6 - ? <span class="text-[10px] px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-300">ROZEPSÁNO</span>
                                     </h5>
-                                    <p class="text-[11px] text-slate-300 font-sans">Hledání odpovedí na otázky.</p>
+                                    <p class="text-[11px] text-slate-300 font-sans">Hledání odpovědí na otázky.</p>
                                 </div>
                             </div>
                             <span class="px-2 py-1 rounded text-[10px] bg-pink-500/20 text-pink-300 border border-pink-500/40 whitespace-nowrap">V procesu</span>
@@ -802,14 +854,13 @@
                     <span class="w-2 h-2 rounded-full bg-pink-400 animate-ping"></span>
                     <span>Stav manuskriptu: <strong class="text-pink-300">Kapitola 6 / ? (Aktivní tvorba)</strong></span>
                 </div>
-                <button onclick="closeZentanModal()" class="w-full sm:w-auto px-5 py-2 rounded-lg bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/40 transition font-bold">
+                <button onclick="closeZentanModal(); playSfx('click');" class="w-full sm:w-auto px-5 py-2 rounded-lg bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/40 transition font-bold">
                     Zavřít
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
     <!-- Footer -->
     <footer class="border-t border-space-800 py-8 px-6 text-center text-slate-500 text-xs font-mono">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -834,15 +885,97 @@
         </div>
     </footer>
 
-    <!-- Interactive Scripts -->
+    <!-- Interactive Scripts & Audio Engine -->
     <script>
         // Set dynamic year
         document.getElementById('year').textContent = new Date().getFullYear();
 
-        // Canvas Space Particles Animation
+        // Audio Engine (Web Audio API Synthesizer)
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function toggleSfx() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sfx-icon');
+            const status = document.getElementById('sfx-status');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-cyber-cyan';
+                status.textContent = 'FX ON';
+                playSfx('open');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                status.textContent = 'MUTE';
+            }
+        }
+
+        function playSfx(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'open') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'type') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(600 + Math.random() * 200, now);
+                    gain.gain.setValueAtTime(0.03, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+                    osc.start(now);
+                    osc.stop(now + 0.03);
+                } else if (type === 'meow') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+                    osc.frequency.exponentialRampToValueAtTime(350, now + 0.3);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch (e) {
+                // Audio Context fallback
+            }
+        }
+
+        // Canvas Space Particles Animation with Mouse Parallax
         const canvas = document.getElementById('space-canvas');
         const ctx = canvas.getContext('2d');
         let stars = [];
+        let mouseX = 0;
+        let mouseY = 0;
 
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -852,14 +985,15 @@
 
         function initStars() {
             stars = [];
-            const count = Math.floor((canvas.width * canvas.height) / 7000);
+            const count = Math.floor((canvas.width * canvas.height) / 6500);
             for (let i = 0; i < count; i++) {
                 stars.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    radius: Math.random() * 1.5,
+                    radius: Math.random() * 1.6,
                     alpha: Math.random(),
-                    speed: Math.random() * 0.3 + 0.05
+                    speed: Math.random() * 0.35 + 0.05,
+                    color: Math.random() > 0.3 ? 'rgba(0, 240, 255,' : 'rgba(168, 85, 247,'
                 });
             }
         }
@@ -869,7 +1003,7 @@
             stars.forEach(star => {
                 ctx.beginPath();
                 ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(0, 240, 255, ${star.alpha})`;
+                ctx.fillStyle = `${star.color} ${star.alpha})`;
                 ctx.fill();
 
                 star.y -= star.speed;
@@ -880,6 +1014,11 @@
             });
             requestAnimationFrame(animateStars);
         }
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 20;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 20;
+        });
 
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
@@ -921,6 +1060,7 @@
         const emailText = document.getElementById('email-text').textContent;
 
         copyBtn.addEventListener('click', () => {
+            playSfx('click');
             const temp = document.createElement('input');
             temp.value = emailText;
             document.body.appendChild(temp);
@@ -957,6 +1097,121 @@
         function closeZentanModal() {
             document.getElementById('zentan-modal').classList.add('hidden');
             document.getElementById('zentan-modal').classList.remove('flex');
+        }
+
+        // Interactive Cyber Terminal CLI Functions
+        function openTerminalModal() {
+            document.getElementById('terminal-modal').classList.remove('hidden');
+            document.getElementById('terminal-modal').classList.add('flex');
+            document.getElementById('terminal-input').focus();
+        }
+
+        function closeTerminalModal() {
+            document.getElementById('terminal-modal').classList.add('hidden');
+            document.getElementById('terminal-modal').classList.remove('flex');
+        }
+
+        // Global Keyboard Shortcut: Ctrl + ~ or Escape for Modals
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === '`' || e.key === '~')) {
+                e.preventDefault();
+                const term = document.getElementById('terminal-modal');
+                if (term.classList.contains('hidden')) {
+                    openTerminalModal();
+                    playSfx('open');
+                } else {
+                    closeTerminalModal();
+                    playSfx('click');
+                }
+            } else if (e.key === 'Escape') {
+                closeTerminalModal();
+                closeVaultModal();
+                closeZentanModal();
+            }
+        });
+
+        function handleTerminalSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('terminal-input');
+            const output = document.getElementById('terminal-output');
+            const cmd = input.value.trim().toLowerCase();
+
+            if (!cmd) return;
+            playSfx('type');
+
+            // Echo input
+            const userLine = document.createElement('div');
+            userLine.innerHTML = `<span class="text-cyber-cyan font-bold">bluecat@station:~$</span> <span class="text-white">${escapeHtml(input.value)}</span>`;
+            output.appendChild(userLine);
+
+            const respLine = document.createElement('div');
+            respLine.className = 'pl-2 border-l-2 border-cyber-cyan/50 my-1 text-slate-300';
+
+            switch(cmd) {
+                case 'help':
+                    respLine.innerHTML = `
+                        <p class="text-cyber-cyan font-bold mb-1">Dostupné příkazy:</p>
+                        <p>• <span class="text-white font-bold">status</span> - Zobrazit stav stanice a serveru</p>
+                        <p>• <span class="text-white font-bold">projects</span> - Seznam hlavních projektů</p>
+                        <p>• <span class="text-white font-bold">games</span> - Otevřít Game Vault</p>
+                        <p>• <span class="text-white font-bold">zentan</span> - Zobrazit stav manuskriptu</p>
+                        <p>• <span class="text-white font-bold">quote</span> - Citát z Inspektora Zentana</p>
+                        <p>• <span class="text-white font-bold">cat</span> - Vesmírný pozdrav</p>
+                        <p>• <span class="text-white font-bold">clear</span> - Vyčistit obrazovku</p>
+                        <p>• <span class="text-white font-bold">exit</span> - Zavřít terminál</p>
+                    `;
+                    break;
+                case 'status':
+                    respLine.innerHTML = `
+                        <p class="text-emerald-400 font-bold">[SYSTEM ONLINE]</p>
+                        <p>• Backend: Hetzner Cloud VPS (Ubuntu Linux)</p>
+                        <p>• Python Core: 3.11+ (Quart & AIOHTTP)</p>
+                        <p>• Database: MySQL Cluster [Connected]</p>
+                        <p>• Flagship Bot: Astra Bot (Online)</p>
+                    `;
+                    break;
+                case 'projects':
+                    respLine.innerHTML = `
+                        <p class="text-cyber-purple font-bold">Projekty Stanice:</p>
+                        <p>1. <a href="http://167.233.23.169:5000/" target="_blank" class="text-cyber-cyan hover:underline">Astra Bot</a> - Discord bot ecosystem</p>
+                        <p>2. <a href="https://discord.gg/RNQKGPt6bJ" target="_blank" class="text-cyber-cyan hover:underline">Deep Space Station</a> - Discord komunita</p>
+                        <p>3. <span class="text-pink-400">Inspektor Zentan</span> - Noir psychologická kniha</p>
+                    `;
+                    break;
+                case 'games':
+                    respLine.innerHTML = `<p class="text-emerald-400">Otevírám Story Game Vault...</p>`;
+                    setTimeout(() => { openVaultModal(); closeTerminalModal(); }, 600);
+                    break;
+                case 'zentan':
+                    respLine.innerHTML = `<p class="text-pink-400">Otevírám náhled manuskriptu Inspektora Zentana...</p>`;
+                    setTimeout(() => { openZentanModal(); closeTerminalModal(); }, 600);
+                    break;
+                case 'quote':
+                    respLine.innerHTML = `<p class="text-pink-300 italic">„Eleniny oči se zarývali Zentanovi pod kůži, ví, že kdyby mu lhala, tak to pozná...“</p>`;
+                    break;
+                case 'cat':
+                    playSfx('meow');
+                    respLine.innerHTML = `<p class="text-cyber-cyan font-bold"> ฅ^•ﻌ•^ฅ // Meow! Stanice hlásí plný provoz.</p>`;
+                    break;
+                case 'clear':
+                    output.innerHTML = '<div class="text-cyber-cyan">Terminál vyčištěn.</div>';
+                    input.value = '';
+                    return;
+                case 'exit':
+                    closeTerminalModal();
+                    input.value = '';
+                    return;
+                default:
+                    respLine.innerHTML = `<p class="text-red-400">Neznámý příkaz '${escapeHtml(cmd)}'. Napiš <span class="text-white font-bold">'help'</span>.</p>`;
+            }
+
+            output.appendChild(respLine);
+            output.scrollTop = output.scrollHeight;
+            input.value = '';
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
     </script>
 </body>
