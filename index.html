@@ -810,14 +810,25 @@
     </div>
 
     <!-- Footer -->
+    <!-- Footer -->
     <footer class="border-t border-space-800 py-8 px-6 text-center text-slate-500 text-xs font-mono">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-2 text-slate-300">
                 <i class="fa-solid fa-cat text-cyber-cyan"></i>
                 <span class="font-display font-bold">BLUECAT DEEP SPACE STATION</span>
             </div>
+            
+            <!-- Social Icons including Instagram -->
+            <div class="flex items-center gap-4 text-slate-400 text-sm">
+                <a href="https://twitch.tv/bluecatlive" target="_blank" onclick="playSfx('click')" class="hover:text-purple-400 transition" title="Twitch"><i class="fa-brands fa-twitch"></i></a>
+                <a href="https://www.instagram.com/bluecat221/" target="_blank" rel="noopener noreferrer" onclick="playSfx('click')" class="hover:text-pink-400 transition" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://discord.gg/RNQKGPt6bJ" target="_blank" onclick="playSfx('click')" class="hover:text-indigo-400 transition" title="Discord"><i class="fa-brands fa-discord"></i></a>
+                <a href="https://github.com/bluecat201" target="_blank" onclick="playSfx('click')" class="hover:text-white transition" title="GitHub"><i class="fa-brands fa-github"></i></a>
+                <a href="https://youtube.com/@bluecatstudios201" target="_blank" onclick="playSfx('click')" class="hover:text-red-500 transition" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            </div>
+
             <p>© <span id="year"></span> Bluecat. Všechna práva vyhrazena.</p>
-            <a href="#" class="hover:text-cyber-cyan transition flex items-center gap-1">
+            <a href="#" onclick="playSfx('click')" class="hover:text-cyber-cyan transition flex items-center gap-1">
                 TOP <i class="fa-solid fa-angle-up"></i>
             </a>
         </div>
